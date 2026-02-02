@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>知识点管理器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background-color: #f7f9f2;
+            color: #333333;
+            line-height: 1.5;
+            padding: 12px;
+            min-height: 100vh;
+            font-size: 14px;
+        }
+        
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                font-size: 13.5px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+                font-size: 13px;
+            }
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #d6e4c3;
+            position: relative;
+        }
+        
+        h1 {
+            color: #2c541d;
+            margin-bottom: 5px;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            color: #5a7d3e;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        /* 批量删除控制栏 */
+        .batch-controls {
+            background: white;
+            border-radius: 10px;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .batch-info {
+            font-size: 0.9rem;
+            color: #5a7d3e;
+        }
+        
+        .batch-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        /* 主容器 */
+        .subjects-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 70px;
+        }
+        
+        .subject-card {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            width: 100%;
+            padding: 15px;
+            border-left: 4px solid #8ab661;
+        }
+        
+        .subject-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #d6e4c3;
+        }
+        
+        .subject-title {
+            font-size: 1.2rem;
+            color: #2c541d;
+            font-weight: 600;
+        }
+        
+        .subject-actions {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .chapter {
+            margin-bottom: 15px;
+            padding: 12px;
+            background-color: #f9fbf5;
+            border-radius: 8px;
+            border-left: 3px solid #b8d194;
+        }
+        
+        .chapter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .chapter-title {
+            font-size: 1.05rem;
+            color: #5a7d3e;
+            font-weight: 600;
+            flex: 1;
+            padding-right: 10px;
+        }
+        
+        .knowledge-item {
+            background-color: #ffffff;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 2px solid #d6e4c3;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .knowledge-content {
+            flex-grow: 1;
+            padding-right: 10px;
+            word-break: break-word;
+            font-size: 0.95rem;
+        }
+        
+        .knowledge-checkbox {
+            margin-right: 8px;
+        }
+        
+        .knowledge-actions {
+            display: flex;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 32px;
+        }
+        
+        .btn-add {
+            background-color: #8ab661;
+            color: white;
+        }
+        
+        .btn-add:active {
+            background-color: #7aa555;
+            transform: scale(0.98);
+        }
+        
+        .btn-delete {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .btn-delete:active {
+            background-color: #f5c6cb;
+            transform: scale(0.98);
+        }
+        
+        .btn-edit {
+            background-color: #e9f0df;
+            color: #5a7d3e;
+        }
+        
+        .btn-edit:active {
+            background-color: #d6e4c3;
+            transform: scale(0.98);
+        }
+        
+        .btn-cancel {
+            background-color: #f1f1f1;
+            color: #666;
+        }
+        
+        .btn-select {
+            background-color: #e9f0df;
+            color: #5a7d3e;
+        }
+        
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            min-height: 28px;
+        }
+        
+        /* 底部操作栏 */
+        .bottom-controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 10px 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            z-index: 1000;
+        }
+        
+        .main-action {
+            flex: 1;
+            margin: 0 5px;
+        }
+        
+        /* 弹窗样式 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-title {
+            color: #2c541d;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d6e4c3;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            background-color: #fdfdfd;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #8ab661;
+            box-shadow: 0 0 0 2px rgba(138, 182, 97, 0.2);
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .modal-actions .btn {
+            flex: 1;
+        }
+        
+        /* 空状态提示 */
+        .empty-state {
+            text-align: center;
+            color: #94a37e;
+            padding: 30px 15px;
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 480px) {
+            .subject-header, .chapter-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .subject-actions, .chapter-actions {
+                margin-top: 8px;
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .bottom-controls {
+                padding: 8px 10px;
+            }
+            
+            .modal-content {
+                padding: 15px;
+            }
+            
+            .knowledge-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .knowledge-actions {
+                margin-top: 8px;
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+        
+        /* 长按提示 */
+        .long-press-hint {
+            font-size: 0.8rem;
+            color: #888;
+            text-align: center;
+            margin-top: 5px;
+            padding: 5px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📚 知识点管理器</h1>
+        <div class="subtitle">长按知识点可选择批量删除</div>
+    </header>
+    
+    <!-- 批量删除控制栏 -->
+    <div class="batch-controls" id="batchControls">
+        <div class="batch-info" id="batchCount">已选择 0 项</div>
+        <div class="batch-actions">
+            <button class="btn btn-cancel btn-small" id="cancelBatchBtn">取消</button>
+            <button class="btn btn-delete btn-small" id="deleteBatchBtn">删除所选</button>
+        </div>
+    </div>
+    
+    <!-- 科目列表 -->
+    <div id="subjectsContainer" class="subjects-container"></div>
+    
+    <!-- 底部操作栏 -->
+    <div class="bottom-controls">
+        <button class="btn btn-select main-action" id="selectAllBtn">全选</button>
+        <button class="btn btn-delete main-action" id="batchDeleteBtn" style="display:none;">批量删除</button>
+        <button class="btn btn-add main-action" id="addSubjectBtn">+ 添加科目</button>
+    </div>
+    
+    <!-- 添加科目弹窗 -->
+    <div class="modal-overlay" id="addSubjectModal">
+        <div class="modal-content">
+            <h3 class="modal-title">添加新科目</h3>
+            <input type="text" id="subjectNameInput" class="input-field" 
+                   placeholder="科目名称（如：马原、毛概）" maxlength="15">
+            <div class="modal-actions">
+                <button class="btn btn-cancel" id="cancelSubjectBtn">取消</button>
+                <button class="btn btn-add" id="confirmSubjectBtn">添加</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加章节弹窗 -->
+    <div class="modal-overlay" id="addChapterModal">
+        <div class="modal-content">
+            <h3 class="modal-title">添加新章节</h3>
+            <input type="text" id="chapterNameInput" class="input-field" 
+                   placeholder="章节名称" maxlength="25">
+            <div class="modal-actions">
+                <button class="btn btn-cancel" id="cancelChapterBtn">取消</button>
+                <button class="btn btn-add" id="confirmChapterBtn">添加</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加/编辑知识点弹窗 -->
+    <div class="modal-overlay" id="knowledgeModal">
+        <div class="modal-content">
+            <h3 class="modal-title" id="knowledgeModalTitle">添加知识点</h3>
+            <textarea id="knowledgeContentInput" class="input-field" 
+                     placeholder="请输入知识点内容" rows="4" maxlength="300"></textarea>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" id="cancelKnowledgeBtn">取消</button>
+                <button class="btn btn-add" id="confirmKnowledgeBtn">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 数据存储结构
+        let data = {
+            subjects: [],
+            lastUpdated: new Date().toISOString()
+        };
+        
+        // 当前操作状态
+        let currentSubjectIndex = null;
+        let currentChapterIndex = null;
+        let currentKnowledgeIndex = null;
+        let isEditing = false;
+        let batchMode = false;
+        let selectedItems = new Set();
+        
+        // DOM元素
+        const subjectsContainer = document.getElementById('subjectsContainer');
+        const batchControls = document.getElementById('batchControls');
+        const batchCount = document.getElementById('batchCount');
+        const cancelBatchBtn = document.getElementById('cancelBatchBtn');
+        const deleteBatchBtn = document.getElementById('deleteBatchBtn');
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+        const addSubjectBtn = document.getElementById('addSubjectBtn');
+        
+        // 弹窗元素
+        const addSubjectModal = document.getElementById('addSubjectModal');
+        const addChapterModal = document.getElementById('addChapterModal');
+        const knowledgeModal = document.getElementById('knowledgeModal');
+        
+        // 初始化示例数据
+        function initSampleData() {
+            if (data.subjects.length === 0) {
+                data.subjects = [
+                    {
+                        name: "马原",
+                        chapters: [
+                            {
+                                name: "第一章 马克思主义哲学",
+                                knowledge: [
+                                    "马克思主义哲学的基本特征",
+                                    "物质与意识的辩证关系",
+                                    "实践是检验真理的唯一标准"
+                                ]
+                            },
+                            {
+                                name: "第二章 政治经济学",
+                                knowledge: [
+                                    "商品二因素：使用价值与价值",
+                                    "剩余价值的生产与分配"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        name: "近代史",
+                        chapters: [
+                            {
+                                name: "第一章 鸦片战争",
+                                knowledge: [
+                                    "鸦片战争的背景与导火索",
+                                    "《南京条约》的主要内容与影响"
+                                ]
+                            }
+                        ]
+                    }
+                ];
+                saveToLocalStorage();
+            }
+        }
+        
+        // 本地存储
+        function saveToLocalStorage() {
+            try {
+                data.lastUpdated = new Date().toISOString();
+                localStorage.setItem('knowledge_data', JSON.stringify(data));
+            } catch (error) {
+                console.error("保存数据失败:", error);
+            }
+        }
+        
+        function loadFromLocalStorage() {
+            try {
+                const savedData = localStorage.getItem('knowledge_data');
+                if (savedData) {
+                    const parsedData = JSON.parse(savedData);
+                    if (parsedData && Array.isArray(parsedData.subjects)) {
+                        data = parsedData;
+                    }
+                }
+            } catch (error) {
+                console.error("加载数据失败:", error);
+            }
+        }
+        
+        // 显示弹窗
+        function showModal(modal) {
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                const input = modal.querySelector('input, textarea');
+                if (input) {
+                    input.focus();
+                    if (input.type === 'text') input.select();
+                }
+            }, 100);
+        }
+        
+        // 隐藏弹窗
+        function hideModal(modal) {
+            modal.style.display = 'none';
+        }
+        
+        // 批量选择相关函数
+        function toggleBatchMode() {
+            batchMode = !batchMode;
+            batchControls.style.display = batchMode ? 'flex' : 'none';
+            batchDeleteBtn.style.display = batchMode ? 'inline-flex' : 'none';
+            selectAllBtn.textContent = batchMode ? '取消全选' : '全选';
+            
+            if (!batchMode) {
+                selectedItems.clear();
+                updateBatchCount();
+            }
+            
+            renderSubjects();
+        }
+        
+        function toggleSelectItem(itemId) {
+            if (selectedItems.has(itemId)) {
+                selectedItems.delete(itemId);
+            } else {
+                selectedItems.add(itemId);
+            }
+            updateBatchCount();
+            renderSubjects();
+        }
+        
+        function selectAllItems() {
+            if (selectedItems.size > 0) {
+                selectedItems.clear();
+            } else {
+                // 收集所有知识点的ID
+                data.subjects.forEach((subject, sIndex) => {
+                    subject.chapters.forEach((chapter, cIndex) => {
+                        chapter.knowledge.forEach((_, kIndex) => {
+                            selectedItems.add(`${sIndex}-${cIndex}-${kIndex}`);
+                        });
+                    });
+                });
+            }
+            updateBatchCount();
+            renderSubjects();
+        }
+        
+        function updateBatchCount() {
+            batchCount.textContent = `已选择 ${selectedItems.size} 项`;
+            selectAllBtn.textContent = batchMode ? (selectedItems.size > 0 ? '取消全选' : '全选') : '全选';
+        }
+        
+        function deleteSelectedItems() {
+            if (selectedItems.size === 0) return;
+            
+            if (!confirm(`确定要删除选中的 ${selectedItems.size} 个知识点吗？`)) return;
+            
+            // 按科目-章节-知识点索引排序（从后往前删除，避免索引变化）
+            const itemsToDelete = Array.from(selectedItems)
+                .map(id => id.split('-').map(Number))
+                .sort((a, b) => {
+                    if (a[0] !== b[0]) return b[0] - a[0];
+                    if (a[1] !== b[1]) return b[1] - a[1];
+                    return b[2] - a[2];
+                });
+            
+            itemsToDelete.forEach(([sIndex, cIndex, kIndex]) => {
+                if (data.subjects[sIndex] && data.subjects[sIndex].chapters[cIndex]) {
+                    data.subjects[sIndex].chapters[cIndex].knowledge.splice(kIndex, 1);
+                }
+            });
+            
+            // 清除空章节
+            data.subjects.forEach(subject => {
+                subject.chapters = subject.chapters.filter(chapter => chapter.knowledge.length > 0);
+            });
+            
+            // 清除空科目
+            data.subjects = data.subjects.filter(subject => subject.chapters.length > 0);
+            
+            selectedItems.clear();
+            toggleBatchMode();
+            saveToLocalStorage();
+            renderSubjects();
+        }
+        
+        // 数据操作函数
+        function addSubject(name) {
+            data.subjects.push({
+                name: name.trim(),
+                chapters: []
+            });
+            saveToLocalStorage();
+            renderSubjects();
+        }
+        
+        function deleteSubject(index) {
+            if (!confirm(`确定要删除科目"${data.subjects[index].name}"及其所有内容吗？`)) return;
+            data.subjects.splice(index, 1);
+            saveToLocalStorage();
+            renderSubjects();
+        }
+        
+        function addChapter(subjectIndex, chapterName) {
+            data.subjects[subjectIndex].chapters.push({
+                name: chapterName.trim(),
+                knowledge: []
+            });
+            saveToLocalStorage();
+            renderSubjects();
+        }
+        
+        function deleteChapter(subjectIndex, chapterIndex) {
+            if (!confirm(`确定要删除章节"${data.subjects[subjectIndex].chapters[chapterIndex].name}"吗？`)) return;
+            data.subjects[subjectIndex].chapters.splice(chapterIndex, 1);
+            saveToLocalStorage();
+            renderSubjects();
+        }
+        
+        function addKnowledge(subjectIndex, chapterIndex, content) {
+            data.subjects[subjectIndex].chapters[chapterIndex].knowledge.push(content.trim());
+            saveToLocalStorage();
+            renderSubjects();
+        }
+        
+        function editKnowledge(subjectIndex, chapterIndex, knowledgeIndex, content) {
+            data.subjects[subjectIndex].chapters[chapterIndex].knowledge[knowledgeIndex] = content.trim();
+            saveToLocalStorage();
+            renderSubjects();
+        }
+        
+        function deleteKnowledge(subjectIndex, chapterIndex, knowledgeIndex) {
+            if (!confirm('确定要删除这个知识点吗？')) return;
+            data.subjects[subjectIndex].chapters[chapterIndex].knowledge.splice(knowledgeIndex, 1);
+            
+            // 如果章节为空，删除章节
+            if (data.subjects[subjectIndex].chapters[chapterIndex].knowledge.length === 0) {
+                data.subjects[subjectIndex].chapters.splice(chapterIndex, 1);
+            }
+            
+            // 如果科目为空，删除科目
+            if (data.subjects[subjectIndex].chapters.length === 0) {
+                data.subjects.splice(subjectIndex, 1);
+            }
+            
+            saveToLocalStorage();
+            renderSubjects();
+        }
+        
+        // 渲染科目列表
+        function renderSubjects() {
+            subjectsContainer.innerHTML = '';
+            
+            if (data.subjects.length === 0) {
+                subjectsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <p>还没有添加任何科目，点击下方按钮开始创建吧！</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            data.subjects.forEach((subject, sIndex) => {
+                const subjectCard = document.createElement('div');
+                subjectCard.className = 'subject-card';
+                
+                let chaptersHTML = '';
+                
+                if (subject.chapters.length === 0) {
+                    chaptersHTML = `
+                        <div class="empty-state">
+                            <p>此科目还没有章节</p>
+                        </div>
+                    `;
+                } else {
+                    subject.chapters.forEach((chapter, cIndex) => {
+                        let knowledgeHTML = '';
+                        
+                        if (chapter.knowledge.length === 0) {
+                            knowledgeHTML = `
+                                <div class="empty-state">
+                                    <p>此章节还没有知识点</p>
+                                </div>
+                            `;
+                        } else {
+                            chapter.knowledge.forEach((knowledge, kIndex) => {
+                                const itemId = `${sIndex}-${cIndex}-${kIndex}`;
+                                const isSelected = selectedItems.has(itemId);
+                                
+                                knowledgeHTML += `
+                                    <div class="knowledge-item" data-id="${itemId}">
+                                        ${batchMode ? `
+                                            <input type="checkbox" class="knowledge-checkbox" 
+                                                   ${isSelected ? 'checked' : ''}
+                                                   onclick="toggleSelectItem('${itemId}')">
+                                        ` : ''}
+                                        <div class="knowledge-content">${knowledge}</div>
+                                        ${!batchMode ? `
+                                            <div class="knowledge-actions">
+                                                <button class="btn btn-edit btn-small" 
+                                                        onclick="editKnowledgeItem(${sIndex}, ${cIndex}, ${kIndex})">编辑</button>
+                                                <button class="btn btn-delete btn-small" 
+                                                        onclick="deleteKnowledge(${sIndex}, ${cIndex}, ${kIndex})">删除</button>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `;
+                            });
+                        }
+                        
+                        chaptersHTML += `
+                            <div class="chapter">
+                                <div class="chapter-header">
+                                    <div class="chapter-title">${chapter.name}</div>
+                                    <div class="chapter-actions">
+                                        ${!batchMode ? `
+                                            <button class="btn btn-add btn-small" 
+                                                    onclick="showAddKnowledgeModal(${sIndex}, ${cIndex})">+ 知识点</button>
+                                            <button class="btn btn-delete btn-small" 
+                                                    onclick="deleteChapter(${sIndex}, ${cIndex})">删除章节</button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                                <div class="knowledge-list">
+                                    ${knowledgeHTML}
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                subjectCard.innerHTML = `
+                    <div class="subject-header">
+                        <div class="subject-title">${subject.name}</div>
+                        <div class="subject-actions">
+                            ${!batchMode ? `
+                                <button class="btn btn-add btn-small" 
+                                        onclick="showAddChapterModal(${sIndex})">+ 章节</button>
+                                <button class="btn btn-delete btn-small" 
+                                        onclick="deleteSubject(${sIndex})">删除科目</button>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <div class="chapters-container">
+                        ${chaptersHTML}
+                    </div>
+                `;
+                
+                subjectsContainer.appendChild(subjectCard);
+            });
+        }
+        
+        // 事件监听器
+        function setupEventListeners() {
+            // 批量操作
+            batchDeleteBtn.addEventListener('click', toggleBatchMode);
+            cancelBatchBtn.addEventListener('click', toggleBatchMode);
+            deleteBatchBtn.addEventListener('click', deleteSelectedItems);
+            selectAllBtn.addEventListener('click', function() {
+                if (batchMode) {
+                    selectAllItems();
+                } else {
+                    toggleBatchMode();
+                }
+            });
+            
+            // 添加科目
+            addSubjectBtn.addEventListener('click', () => {
+                document.getElementById('subjectNameInput').value = '';
+                showModal(addSubjectModal);
+            });
+            
+            document.getElementById('cancelSubjectBtn').addEventListener('click', () => hideModal(addSubjectModal));
+            document.getElementById('confirmSubjectBtn').addEventListener('click', () => {
+                const name = document.getElementById('subjectNameInput').value.trim();
+                if (name) {
+                    addSubject(name);
+                    hideModal(addSubjectModal);
+                } else {
+                    alert('请输入科目名称');
+                }
+            });
+            
+            // 添加章节
+            document.getElementById('cancelChapterBtn').addEventListener('click', () => hideModal(addChapterModal));
+            document.getElementById('confirmChapterBtn').addEventListener('click', () => {
+                const name = document.getElementById('chapterNameInput').value.trim();
+                if (name && currentSubjectIndex !== null) {
+                    addChapter(currentSubjectIndex, name);
+                    hideModal(addChapterModal);
+                } else {
+                    alert('请输入章节名称');
+                }
+            });
+            
+            // 添加/编辑知识点
+            document.getElementById('cancelKnowledgeBtn').addEventListener('click', () => hideModal(knowledgeModal));
+            document.getElementById('confirmKnowledgeBtn').addEventListener('click', () => {
+                const content = document.getElementById('knowledgeContentInput').value.trim();
+                if (content && currentSubjectIndex !== null && currentChapterIndex !== null) {
+                    if (isEditing && currentKnowledgeIndex !== null) {
+                        editKnowledge(currentSubjectIndex, currentChapterIndex, currentKnowledgeIndex, content);
+                    } else {
+                        addKnowledge(currentSubjectIndex, currentChapterIndex, content);
+                    }
+                    hideModal(knowledgeModal);
+                } else {
+                    alert('请输入知识点内容');
+                }
+            });
+            
+            // 长按选择功能
+            let touchStartTime;
+            let touchStartItem;
+            
+            subjectsContainer.addEventListener('touchstart', function(e) {
+                const item = e.target.closest('.knowledge-item');
+                if (item) {
+                    touchStartTime = Date.now();
+                    touchStartItem = item;
+                }
+            }, { passive: true });
+            
+            subjectsContainer.addEventListener('touchend', function(e) {
+                if (touchStartTime && Date.now() - touchStartTime > 800) {
+                    // 长按超过800ms，进入批量选择模式
+                    e.preventDefault();
+                    if (touchStartItem && !batchMode) {
+                        toggleBatchMode();
+                        const itemId = touchStartItem.dataset.id;
+                        if (itemId) {
+                            selectedItems.add(itemId);
+                            updateBatchCount();
+                            renderSubjects();
+                        }
+                    }
+                }
+                touchStartTime = null;
+                touchStartItem = null;
+            });
+            
+            // 点击弹窗外部关闭弹窗
+            [addSubjectModal, addChapterModal, knowledgeModal].forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) hideModal(modal);
+                });
+            });
+            
+            // 回车键确认
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && document.activeElement.type !== 'textarea') {
+                    if (addSubjectModal.style.display === 'flex') {
+                        document.getElementById('confirmSubjectBtn').click();
+                    } else if (addChapterModal.style.display === 'flex') {
+                        document.getElementById('confirmChapterBtn').click();
+                    } else if (knowledgeModal.style.display === 'flex') {
+                        document.getElementById('confirmKnowledgeBtn').click();
+                    }
+                }
+                if (e.key === 'Escape') {
+                    [addSubjectModal, addChapterModal, knowledgeModal].forEach(hideModal);
+                }
+            });
+        }
+        
+        // 全局函数供按钮调用
+        window.showAddChapterModal = function(subjectIndex) {
+            currentSubjectIndex = subjectIndex;
+            document.getElementById('chapterNameInput').value = '';
+            showModal(addChapterModal);
+        };
+        
+        window.showAddKnowledgeModal = function(subjectIndex, chapterIndex) {
+            currentSubjectIndex = subjectIndex;
+            currentChapterIndex = chapterIndex;
+            isEditing = false;
+            document.getElementById('knowledgeModalTitle').textContent = '添加知识点';
+            document.getElementById('knowledgeContentInput').value = '';
+            showModal(knowledgeModal);
+        };
+        
+        window.editKnowledgeItem = function(subjectIndex, chapterIndex, knowledgeIndex) {
+            currentSubjectIndex = subjectIndex;
+            currentChapterIndex = chapterIndex;
+            currentKnowledgeIndex = knowledgeIndex;
+            isEditing = true;
+            document.getElementById('knowledgeModalTitle').textContent = '编辑知识点';
+            document.getElementById('knowledgeContentInput').value = data.subjects[subjectIndex].chapters[chapterIndex].knowledge[knowledgeIndex];
+            showModal(knowledgeModal);
+        };
+        
+        // 初始化页面
+        function initPage() {
+            loadFromLocalStorage();
+            if (data.subjects.length === 0) {
+                initSampleData();
+            }
+            setupEventListeners();
+            renderSubjects();
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', initPage);
+    </script>
+</body>
+</html>
